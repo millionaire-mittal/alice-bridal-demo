@@ -33,7 +33,7 @@ img/         client photos, cropped from her current website
 | # | Section | Effect |
 |---|---|---|
 | — | Hero: *Ciao, bella.* | Words un-blur, olive branch draws, arch photo reveals |
-| — | Pull line | Word-by-word un-blur |
+| — | Pull line + olive tree | Word un-blur; an olive tree grows as you scroll down and shrinks back as you scroll up; leaves sway and lean with the cursor |
 | Uno | Meet Alice | Arch portrait, botanical sprig grows over the arch |
 | Due | Your journey (4 steps) | Pinned section; photos open with a circular reveal |
 | Tre | Behind the scenes | Reels slide sideways as you scroll |

@@ -138,12 +138,28 @@ html.js:not(.rm) .bot.in path,html.js:not(.rm) .bot.in circle,html.js:not(.rm) .
 .scroll-cue i{width:1px;height:44px;background:linear-gradient(var(--sage) 50%,transparent 50%) 0 0/1px 200%;animation:cue 2.4s var(--ease) infinite}
 @keyframes cue{from{background-position:0 100%}to{background-position:0 -100%}}
 
-/* ---------- pull ---------- */
-.pull{padding:150px 0 170px;text-align:center}
-.pull .narrow{max-width:980px}
+/* ---------- pull + olive tree ---------- */
+.pull{padding:120px 0 120px}
+.pull-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(30px,5vw,80px);align-items:center}
 .pull .label{margin-bottom:30px}
-.pull-text{font-family:var(--display);font-size:clamp(34px,4.4vw,64px);line-height:1.12}
+.pull-text{font-family:var(--display);font-size:clamp(34px,4vw,60px);line-height:1.12}
 .pull-text em{color:var(--peach-d)}
+.roots{margin-top:34px;max-width:42ch;color:var(--taupe);font-size:16px}
+.roots .script{font-size:40px;line-height:.6;margin-right:8px;vertical-align:-4px}
+.tree-wrap{position:relative;height:min(660px,78vh)}
+.tree{width:100%;height:100%;overflow:visible;display:block}
+.tree path,.tree ellipse,.tree circle{fill:none;stroke:var(--sage);stroke-width:1.1;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}
+.tree .t0{stroke-width:1.5}.tree .t1{stroke-width:1.3}
+.tree .bark{stroke-width:.8;opacity:.6}
+.tree .gr{stroke:#B7AE9C}
+.tree .fr{stroke:var(--olive-2)}
+.tree .pf{fill:var(--silk);stroke:var(--silk-edge)}
+.tree .lf{fill:var(--sage);fill-opacity:0}
+html.js:not(.rm) .tree path,html.js:not(.rm) .tree ellipse,html.js:not(.rm) .tree circle{stroke-dasharray:1 1;stroke-dashoffset:1}
+.tree .sway{transform-box:view-box;transform-origin:300px 440px;animation:sway 7s ease-in-out infinite alternate}
+.tree .gust{transform-box:view-box;transform-origin:300px 440px}
+@keyframes sway{from{transform:rotate(-.7deg)}to{transform:rotate(.7deg)}}
+html.rm .tree .sway{animation:none}
 
 /* ---------- uno ---------- */
 .uno{padding:150px 0 170px}
@@ -352,7 +368,9 @@ html.js:not(.rm) .bow.in path{stroke-dashoffset:0}
   .hero-arch{width:72%}
   .hero-mini{width:120px;height:160px}
   .scroll-cue{display:none}
-  .pull{padding:100px 0 110px}
+  .pull{padding:90px 0 100px}
+  .pull-grid{grid-template-columns:1fr}
+  .tree-wrap{height:420px}
   .uno,.words,.book{padding:100px 0 110px}
   .uno-grid,.w-grid,.b-grid,.work-head{grid-template-columns:1fr}
   .uno-photos{height:500px}
@@ -449,15 +467,21 @@ html.js:not(.rm) .bow.in path{stroke-dashoffset:0}
   <div class="scroll-cue" aria-hidden="true">Scorri<i></i></div>
 </section>
 
-<!-- ============ PULL LINE ============ -->
-<section class="pull">
-  <i class="rp" data-rib=".04" style="top:22%"></i>
-  <div class="wrap narrow z">
-    <p class="label" data-fade>Planning a wedding can feel overwhelming.</p>
-    <p class="pull-text" data-blur>The good news? You’ve just found one part you <em>don’t need to worry about.</em></p>
+<!-- ============ PULL LINE + OLIVE TREE ============ -->
+<section class="pull" id="pull">
+  <i class="rp" data-rib=".04" style="top:18%"></i>
+  <div class="wrap pull-grid">
+    <div class="pull-copy z">
+      <p class="label" data-fade>Planning a wedding can feel overwhelming.</p>
+      <p class="pull-text" data-blur>The good news? You’ve just found one part you <em>don’t need to worry about.</em></p>
+      <p class="roots" data-fade style="--d:300ms"><span class="script">Radici.</span> Rooted in Milan, grown in Nottingham, and made to last, like every style Alice creates.</p>
+    </div>
+    <div class="tree-wrap z" id="treeWrap">
+      <svg class="tree" id="tree" viewBox="0 0 600 640" role="img" aria-label="Line drawing of an olive tree that grows as you scroll"></svg>
+    </div>
   </div>
-  <i class="rp" data-rib=".06" style="top:80%"></i>
-  <i class="rp" data-rib=".5" data-rib-m=".05" style="top:93%"></i>
+  <i class="rp" data-rib=".05" style="top:82%"></i>
+  <i class="rp" data-rib=".5" data-rib-m=".05" style="top:95%"></i>
 </section>
 
 <!-- ============ UNO · ALICE ============ -->
@@ -838,6 +862,113 @@ $$('svg.bot').forEach(function(svg){
   svg.setAttribute('viewBox', vb); svg.setAttribute('preserveAspectRatio','xMidYMid meet'); svg.innerHTML = h;
 });
 
+/* ---------- olive tree, scrubbed by scroll ---------- */
+var treeSvg = $('#tree'), treeEls = [], treeP = -1, gust = 0, gustV = 0, gustG = null;
+(function buildTree(){
+  var R = rng(2026), items = [];
+  var add = function(tag, attrs, cls, a, b, grp){ items.push({tag:tag, at:attrs, c:cls, a:a, b:b, g:grp}); };
+  var q = function(P,C,E,t){ var u=1-t; return [u*u*P[0]+2*u*t*C[0]+t*t*E[0], u*u*P[1]+2*u*t*C[1]+t*t*E[1]]; };
+  var qd = function(P,C,E,t){ return [2*(1-t)*(C[0]-P[0])+2*t*(E[0]-C[0]), 2*(1-t)*(C[1]-P[1])+2*t*(E[1]-C[1])]; };
+  // ground + roots
+  add('path', {d:'M60 602 C 160 594, 220 606, 300 600 S 470 596, 545 603'}, 'gr', 0, .12, 'base');
+  add('path', {d:'M120 612 C 170 608, 200 614, 250 611'}, 'gr bark', .02, .12, 'base');
+  add('path', {d:'M360 612 C 400 609, 440 614, 490 610'}, 'gr bark', .03, .13, 'base');
+  [['M288 598 C 270 604, 252 606, 236 612',.06],['M312 598 C 330 605, 350 606, 368 613',.07],['M296 600 C 292 608, 286 614, 276 620',.08]].forEach(function(r){ add('path',{d:r[0]},'t1',r[1],r[1]+.08,'base'); });
+  // gnarled trunk: two outlines + bark lines
+  add('path', {d:'M276 600 C 268 560, 296 530, 282 494 C 272 468, 292 452, 284 438'}, 't0', .08, .3, 'base');
+  add('path', {d:'M326 600 C 336 564, 306 534, 320 498 C 328 472, 310 454, 318 438'}, 't0', .09, .31, 'base');
+  add('path', {d:'M296 586 C 290 556, 312 530, 300 500'}, 'bark', .16, .3, 'base');
+  add('path', {d:'M306 520 C 312 500, 300 484, 308 466'}, 'bark', .2, .32, 'base');
+  // recursive limbs
+  function limb(P, a, L, depth, t0){
+    var bend = (R()-.5)*.6, E=[P[0]+Math.cos(a)*L, P[1]+Math.sin(a)*L], C=[P[0]+Math.cos(a+bend)*L*.55, P[1]+Math.sin(a+bend)*L*.55];
+    var dur = .11 - depth*.012;
+    add('path', {d:'M'+f(P[0])+' '+f(P[1])+' Q'+f(C[0])+' '+f(C[1])+' '+f(E[0])+' '+f(E[1])}, depth<2 ? 't'+depth : '', t0, t0+dur, 'canopy');
+    // leaves along the limb
+    if (depth >= 2){
+      var n = depth >= 3 ? 3 : 2;
+      for (var j=0;j<n;j++){
+        var s = .28 + j*(.7/n) + R()*.05, pt = q(P,C,E,s), tg = qd(P,C,E,s), ang = Math.atan2(tg[1],tg[0]) + (j%2 ? .75 : -.75) + (R()-.5)*.3;
+        var lf = leaf(pt, ang, 22 + R()*8, 4.6 + R()*1.4), la = t0 + dur*s + .02;
+        add('path', {d:lf.o}, 'lf', la, la + .07, 'canopy');
+        add('path', {d:lf.r}, 'bark', la + .03, la + .09, 'canopy');
+      }
+    }
+    if (depth < 3){
+      var k = depth === 0 ? 2 : (R() < .25 ? 3 : 2), spread = depth === 0 ? .72 : .58;
+      for (var i=0;i<k;i++){
+        var na = a + (i-(k-1)/2)*spread + (R()-.5)*.25, st = .62 + R()*.3, sp = q(P,C,E,st);
+        limb(sp, na, L*(.6 + R()*.14), depth+1, t0 + dur*st*.9);
+      }
+    } else {
+      // tip cluster: leaves, then olives or a blossom
+      var ta = Math.atan2(E[1]-C[1], E[0]-C[0]);
+      [-.5,.45].forEach(function(o, m){ var lf2 = leaf(E, ta+o, 22 + R()*6, 4.8); add('path',{d:lf2.o},'lf', t0+dur+.02+m*.015, t0+dur+.09+m*.015, 'canopy'); });
+      var rr = R();
+      if (rr < .38){
+        var oa = ta + Math.PI/2*(R()<.5?1:-1), op=[E[0]+Math.cos(oa)*9, E[1]+Math.sin(oa)*9];
+        add('path', {d:'M'+f(E[0])+' '+f(E[1])+' L'+f(op[0])+' '+f(op[1])}, 'fr', .8, .86, 'canopy');
+        add('ellipse', {cx:f(op[0]+Math.cos(oa)*4), cy:f(op[1]+Math.sin(oa)*4), rx:3.6, ry:5.2, transform:'rotate('+f(oa*57.3+90)+' '+f(op[0]+Math.cos(oa)*4)+' '+f(op[1]+Math.sin(oa)*4)+')'}, 'fr', .84, .92, 'canopy');
+      } else if (rr < .62){
+        var bc=[E[0]+Math.cos(ta)*6, E[1]+Math.sin(ta)*6], ro=R()*6;
+        for (var pk=0;pk<5;pk++){
+          var pa = ro + pk*1.2566, d=[Math.cos(pa),Math.sin(pa)], nn=[-d[1],d[0]], tp=[bc[0]+d[0]*8, bc[1]+d[1]*8];
+          add('path', {d:'M'+f(bc[0])+' '+f(bc[1])+' Q'+f(bc[0]+d[0]*6+nn[0]*4)+' '+f(bc[1]+d[1]*6+nn[1]*4)+' '+f(tp[0])+' '+f(tp[1])+' Q'+f(bc[0]+d[0]*6-nn[0]*4)+' '+f(bc[1]+d[1]*6-nn[1]*4)+' '+f(bc[0])+' '+f(bc[1])}, 'pf', .88+pk*.01, .96+pk*.008, 'canopy');
+        }
+      }
+    }
+  }
+  var top=[300,440], base=-Math.PI/2;
+  limb([292,446], base-1.0, 150, 0, .28);
+  limb([298,440], base-.38, 168, 0, .3);
+  limb([304,440], base+.3, 160, 0, .29);
+  limb([310,446], base+.95, 146, 0, .31);
+  // normalise timings into 0..1
+  var mx = 0; items.forEach(function(it){ mx = Math.max(mx, it.b); });
+  var h = '<g class="base">', hc = '';
+  items.forEach(function(it, i){
+    it.a /= mx; it.b /= mx;
+    var at = ' pathLength="1" data-i="'+i+'"' + (it.c ? ' class="'+it.c+'"' : '');
+    for (var k in it.at) at += ' '+k+'="'+it.at[k]+'"';
+    var el = '<'+it.tag+at+'/>';
+    if (it.g === 'base') h += el; else hc += el;
+  });
+  treeSvg.innerHTML = h + '</g><g class="sway"><g class="gust">' + hc + '</g></g>';
+  $$('[data-i]', treeSvg).forEach(function(el){ var it = items[+el.getAttribute('data-i')]; treeEls.push({el:el, a:it.a, b:it.b, fill: /\b(lf|pf)\b/.test(it.c||'')}); });
+  gustG = $('.gust', treeSvg);
+})();
+var treeWrap = $('#treeWrap');
+function updTree(){
+  var p;
+  if (RM) p = 1;
+  else {
+    var r = treeWrap.getBoundingClientRect(), vh = window.innerHeight;
+    if (r.bottom < -200 || r.top > vh + 200) return;
+    p = clamp((vh*.92 - r.top) / (vh*.92 - vh*.12 + r.height*.15), 0, 1);
+  }
+  if (Math.abs(p - treeP) < .0015) return; treeP = p;
+  for (var i=0;i<treeEls.length;i++){
+    var t = treeEls[i], v = clamp((p - t.a)/(t.b - t.a), 0, 1);
+    t.el.style.strokeDashoffset = 1 - v;
+    if (t.fill) t.el.style.fillOpacity = t.el.classList.contains('pf') ? v*.9 : v*.05;
+  }
+}
+// a cursor passing through the canopy bends it like a breeze
+if (!RM){
+  var gLast = null, gRun = false;
+  treeWrap.addEventListener('pointermove', function(e){
+    if (gLast !== null) gustV += (e.clientX - gLast)*.05;
+    gLast = e.clientX;
+    if (!gRun){ gRun = true; requestAnimationFrame(gTick); }
+  });
+  treeWrap.addEventListener('pointerleave', function(){ gLast = null; });
+  function gTick(){
+    gustV += -gust*.06; gustV *= .86; gust += gustV; gust = clamp(gust, -4, 4);
+    gustG.style.transform = 'rotate('+gust.toFixed(3)+'deg)';
+    if (Math.abs(gust) > .005 || Math.abs(gustV) > .005) requestAnimationFrame(gTick); else { gRun = false; gustG.style.transform = ''; }
+  }
+}
+
 /* ---------- reveal on view ---------- */
 var io = new IntersectionObserver(function(es){
   es.forEach(function(e){ if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
@@ -932,7 +1063,7 @@ $$('.reel .play').forEach(function(b){ b.addEventListener('click', function(){
 var nav = $('#nav');
 /* ---------- master scroll loop ---------- */
 var ticking = false;
-function frame(){ ticking=false; drawRibbon(); updJourney(); updReels(); nav.classList.toggle('scrolled', window.scrollY > 40); }
+function frame(){ ticking=false; drawRibbon(); updTree(); updJourney(); updReels(); nav.classList.toggle('scrolled', window.scrollY > 40); }
 function onScroll(){ if (!ticking){ ticking = true; requestAnimationFrame(frame); } }
 window.addEventListener('scroll', onScroll, {passive:true});
 var rT; function layout(){ layoutReels(); buildRibbon(); frame(); }
